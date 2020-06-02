@@ -43,3 +43,22 @@ components.main.binaries.whenElementFinalized { binary ->
         }
     }
 }
+
+task nativesJar(type: Jar, dependsOn: assemble) {
+    switch (OperatingSystem.current()) {
+        case OperatingSystem.WINDOWS:
+            classifier 'natives-windows'
+            from("${buildDir}/lib/main/release") {
+                include '*.dll'
+            }
+            break
+        case OperatingSystem.LINUX:
+            classifier 'natives-linux'
+            from("${buildDir}/lib/main/release")
+            break
+        case OperatingSystem.MAC_OS:
+            classifier 'natives-macos'
+            from("${buildDir}/lib/main/release")
+            break
+    }
+}
