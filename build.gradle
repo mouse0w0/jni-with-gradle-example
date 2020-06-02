@@ -1,0 +1,45 @@
+import org.gradle.internal.os.OperatingSystem
+import org.gradle.internal.jvm.Jvm
+
+plugins {
+    id 'cpp-library' // cpp-library must be applied first
+    id 'java'
+}
+
+group 'org.example'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = targetCompatibility = 1.8
+
+repositories {
+    jcenter()
+    mavenCentral()
+}
+
+def projectHeadersPath = file("${buildDir}/generated/sources/headers/java/main")
+library {
+    linkage = [Linkage.SHARED]
+    targetMachines.add(machines.windows.x86_64)
+
+    source.from 'src/main/cpp'
+    privateHeaders.from projectHeadersPath
+    publicHeaders.from projectHeadersPath
+}
+
+def jdkHeadersPath = file("${Jvm.current().javaHome}/include")
+components.main.binaries.whenElementFinalized { binary ->
+    project.dependencies {
+        add(binary.includePathConfiguration.name, files(jdkHeadersPath))
+        switch (OperatingSystem.current()) {
+            case OperatingSystem.WINDOWS:
+                add(binary.includePathConfiguration.name, files("${jdkHeadersPath}/win32"))
+                break
+            case OperatingSystem.LINUX:
+                add(binary.includePathConfiguration.name, files("${jdkHeadersPath}/linux"))
+                break
+            case OperatingSystem.MAC_OS:
+                add(binary.includePathConfiguration.name, files("${jdkHeadersPath}/darwin"))
+                break
+        }
+    }
+}
